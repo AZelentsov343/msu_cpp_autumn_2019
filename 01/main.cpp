@@ -11,7 +11,7 @@ int main(int argc , char *argv[]) {
     try {
         cout << calc(argv[1]) << endl;
     }
-    catch (struct Exception e) {
+    catch (struct Exception &e) {
         cout << e.message << endl;
         return 1;
     }

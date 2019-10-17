@@ -58,14 +58,14 @@ int last_calc(struct List *prev, int cur_num) {
     } else if (prev->prior > prev->prev->prior) {
         try {
             prev->num = count(prev->num, prev->op, cur_num);
-        } catch (struct Exception e) {
+        } catch (struct Exception &e) {
             rec_delete(prev);
             throw;
         }
         if (prev->prev->prior != 0) {
             try {
                 res = count(prev->prev->num, prev->prev->op, prev->num);
-            } catch (struct Exception e) {
+            } catch (struct Exception &e) {
                 rec_delete(prev);
                 throw;
             }
@@ -78,7 +78,7 @@ int last_calc(struct List *prev, int cur_num) {
         try {
             prev->num = count(prev->prev->num, prev->prev->op, prev->num);
             res = count(prev->num, prev->op, cur_num);
-        } catch (struct Exception e) {
+        } catch (struct Exception &e) {
             rec_delete(prev);
             throw;
         }
@@ -171,7 +171,7 @@ int calc(const char *s, struct List *prev) {
         while (l->prev->prior >= l->prior) {
             try {
                 l->num = count(l->prev->num, l->prev->op, l->num);
-            } catch (struct Exception e){
+            } catch (struct Exception &e){
                 rec_delete(prev);
                 throw;
             }
