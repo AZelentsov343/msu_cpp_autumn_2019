@@ -1,13 +1,15 @@
 #ifndef DESKTOP_EXCEPTION_H
 #define DESKTOP_EXCEPTION_H
+#include <string>
 
 class Exception {
 public:
-    Exception(const char *mes);
-    ~Exception();
+    Exception(const std::string mes);
+
     void print_message() const;
+
 private:
-    char *message;
+    std::string message;
 };
 
 
