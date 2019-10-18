@@ -4,11 +4,12 @@
 
 class Exception {
 public:
-    Exception(std::string mes);
+    Exception(const char *mes);
+
     void print_message();
 
 private:
-    const std::string message;
+    const char *message;
 };
 
 

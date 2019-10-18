@@ -1,10 +1,10 @@
 #include <iostream>
 #include "Exception.h"
 
-Exception::Exception(std::string mes) {
+Exception::Exception(const char *mes) {
     message = mes;
 }
 
 void Exception::print_message() {
-    std::cerr << message << endl;
+    std::cerr << message << std::endl;
 }
