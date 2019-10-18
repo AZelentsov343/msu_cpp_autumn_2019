@@ -1,10 +1,11 @@
 #include <iostream>
+#include <cstring>
 #include "Exception.h"
 
 Exception::Exception(const char *mes) {
-    message = mes;
+    message = strcpy(message, mes);
 }
 
-void Exception::print_message() {
+void Exception::print_message() const {
     std::cerr << message << std::endl;
 }

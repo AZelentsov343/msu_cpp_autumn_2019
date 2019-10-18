@@ -6,10 +6,10 @@ class Exception {
 public:
     Exception(const char *mes);
 
-    void print_message();
+    void print_message() const;
 
 private:
-    const char *message;
+    char *message;
 };
 
 
