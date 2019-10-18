@@ -4,7 +4,7 @@
 
 class Exception {
 public:
-    Exception(const std::string mes);
+    Exception(const std::string& mes);
 
     void print_message() const;
 

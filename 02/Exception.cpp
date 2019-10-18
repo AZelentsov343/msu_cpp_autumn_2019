@@ -2,7 +2,7 @@
 #include "Exception.h"
 
 
-Exception::Exception(const std::string mes) {
+Exception::Exception(const std::string& mes) {
     message = mes;
 }
 
