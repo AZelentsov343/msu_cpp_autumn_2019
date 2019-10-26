@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include "Matrix.h"
 
@@ -7,7 +8,7 @@ int main() {
     const size_t rows = 5;
     const size_t cols = 3;
 
-    Matrix m(rows, cols);
+    Matrix m = Matrix(rows, cols);
 
     if (m.getRows() != 5) {
         cerr << "Wrong get rows!" << endl;

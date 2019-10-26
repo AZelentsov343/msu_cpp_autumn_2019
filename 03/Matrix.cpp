@@ -11,6 +11,7 @@ Matrix::Matrix(int rows, int columns) {
             matr_ptr[i][j] = 0;
         }
     }
+    row = new Row(0, cols);
 }
 
 Matrix::~Matrix() {
@@ -18,9 +19,10 @@ Matrix::~Matrix() {
         delete matr_ptr[i];
     }
     delete matr_ptr;
+    delete row;
 }
 
-const Matrix &Matrix::operator*=(int x) {
+Matrix &Matrix::operator*=(int x) {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             matr_ptr[i][j] *= x;
@@ -55,20 +57,20 @@ int Matrix::getColumns() const {
     return cols;
 }
 
-Matrix::Row Matrix::operator[](int row) {
+Matrix::Row &Matrix::operator[](int row) {
     if (row >= rows) {
         throw std::out_of_range("");
     }
-    auto r = new Row(matr_ptr[row], cols);
-    return *r;
+    this->row->row_ptr = matr_ptr[row];
+    return *(this->row);
 }
 
-const Matrix::Row Matrix::operator[](int row) const {
+const Matrix::Row &Matrix::operator[](int row) const {
     if (row >= rows) {
         throw std::out_of_range("");
     }
-    auto r = new Row(matr_ptr[row], cols);
-    return *r;
+    this->row->row_ptr = matr_ptr[row];
+    return *(this->row);
 }
 
 Matrix::Row::Row(int *row, int len) {

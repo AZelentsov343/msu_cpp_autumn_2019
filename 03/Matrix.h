@@ -8,7 +8,7 @@ public:
 
     ~Matrix();
 
-    const Matrix &operator*=(int x);
+    Matrix &operator*=(int x);
 
     bool operator==(const Matrix& m) const;
 
@@ -26,15 +26,16 @@ public:
 
         int &operator[](int col);
 
+        int *row_ptr;
     private:
         int length;
-        int *row_ptr;
     };
 
-    Row operator[](int row);
-    const Row operator[](int row) const;
+    Row &operator[](int row);
+    const Row &operator[](int row) const;
 
 private:
+    Row *row;
     int rows;
     int cols;
     int **matr_ptr;
