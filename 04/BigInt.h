@@ -6,8 +6,8 @@ class BigInt {
     size_t size;
     bool is_neg;
     bool is_zero;
-public:
     BigInt(char *m, size_t s, bool isn);
+public:
     BigInt(long long x);
     BigInt();
     ~BigInt();
@@ -16,8 +16,8 @@ public:
     BigInt(BigInt&& value);
     BigInt &operator=(BigInt&& value);
     friend std::ostream& operator<<(std::ostream& out, const BigInt& value);
-    BigInt operator+(BigInt value) const;
-    BigInt operator-(BigInt value) const;
+    BigInt operator+(const BigInt& value) const;
+    BigInt operator-(const BigInt& value) const;
     BigInt operator-() const;
     bool operator==(const BigInt& value) const;
     bool operator!=(const BigInt& value) const;

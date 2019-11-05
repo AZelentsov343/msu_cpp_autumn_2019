@@ -69,9 +69,9 @@ BigInt &BigInt::operator=(const BigInt &value) {
     return *this;
 }
 
-BigInt::BigInt(BigInt &&value) : size(std::move(value.size)), is_neg(std::move(value.is_neg)), is_zero(std::move(value.is_zero)) {
+BigInt::BigInt(BigInt &&value) : size(value.size), is_neg(value.is_neg), is_zero(value.is_zero) {
     delete[] mas;
-    mas = std::move(value.mas);
+    mas = value.mas;
     value.mas = nullptr;
     value.size = 0;
 }
@@ -81,10 +81,10 @@ BigInt &BigInt::operator=(BigInt &&value) {
         return *this;
     }
     delete[] mas;
-    mas = std::move(value.mas);
-    size = std::move(value.size);
-    is_neg = std::move(value.is_neg);
-    is_zero = std::move(value.is_zero);
+    mas = value.mas;
+    size = value.size;
+    is_neg = value.is_neg;
+    is_zero = value.is_zero;
     value.mas = nullptr;
     value.size = 0;
     return *this;
@@ -167,54 +167,14 @@ bool BigInt::operator>(const BigInt &value) const {
 }
 
 bool BigInt::operator>=(const BigInt &value) const {
-    if (value == *this) {
-        return true;
-    }
-    if (value.is_neg && !is_neg) {
-        return true;
-    }
-    if (!value.is_neg && is_neg) {
-        return false;
-    }
-    if (!value.is_neg && !is_neg) {
-        if (value.size > size) {
-            return false;
-        }
-        if (value.size < size) {
-            return true;
-        }
-        for (int i = size - 1; i >= 0; i--) {
-            if (mas[i] > value.mas[i]) {
-                return true;
-            } else if (mas[i] < value.mas[i]) {
-                return false;
-            }
-        }
-        return true;
-    } else if (value.is_neg && is_neg) {
-        if (value.size > size) {
-            return true;
-        }
-        if (value.size < size) {
-            return false;
-        }
-        for (int i = size - 1; i >= 0; i--) {
-            if (mas[i] > value.mas[i]) {
-                return false;
-            } else if (mas[i] < value.mas[i]) {
-                return true;
-            }
-        }
-        return true;
-    }
-    return false;
+    return (*this > value || *this == value);
 }
 
 bool BigInt::operator<(const BigInt &value) const {
     return !(*this >= value);
 }
 
-BigInt BigInt::operator+(BigInt value) const {
+BigInt BigInt::operator+(const BigInt& value) const {
     if (!is_neg && value.is_neg) {
         auto tmp = -value;
         return (*this).operator-(tmp);
@@ -256,7 +216,7 @@ BigInt BigInt::operator+(BigInt value) const {
     return BigInt(res, res_size, is_neg);
 }
 
-BigInt BigInt::operator-(BigInt value) const {
+BigInt BigInt::operator-(const BigInt& value) const {
     if (!is_neg && value.is_neg) {
         auto tmp = -value;
         return (*this).operator+(tmp);
