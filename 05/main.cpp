@@ -2,6 +2,8 @@
 #include <sstream>
 #include "Serializer.cpp"
 
+//Copied from https://github.com/mtrempoltsev/msu_cpp_lectures/tree/master/homework/05
+
 #define checkEqual(x, y) do { if ((x) != (y)) { std::cout << "at line " << __LINE__ << ": " << (x) << " != " << (y) << '\n'; }; } while(0)
 #define checkTrue(cond) do { if (!(cond)) std::cout << "at line " << __LINE__ << ": " << #cond << '\n'; } while(0)
 
