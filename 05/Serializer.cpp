@@ -26,13 +26,7 @@ private:
 
     template <class T, class T2, class... ArgsT>
     Error process(T first, T2 second, ArgsT... args) {
-        if (typeid(first) == typeid(uint64_t)) {
-            *out << first << Separator;
-        } else if (typeid(first) == typeid(bool)) {
-            *out << (first ? "true" : "false") << Separator;
-        } else {
-            return Error::CorruptedArchive;
-        }
+        handler(first);
         if (sizeof...(args) == 0) {
             return process(second);
         } else {
@@ -42,14 +36,16 @@ private:
 
     template <class Last>
     Error process(Last last) {
-        if (typeid(last) == typeid(uint64_t)) {
-            *out << last;
-        } else if (typeid(last) == typeid(bool)) {
-            *out << (last ? "true" : "false");
-        } else {
-            return Error::CorruptedArchive;
-        }
+        handler(last);
         return Error::NoError;
+    }
+
+    void handler(bool a) {
+        *out << (a ? "true" : "false") << Separator;
+    }
+
+    void handler(uint64_t a) {
+        *out << a << Separator;
     }
 };
 
@@ -73,53 +69,8 @@ private:
 
     template <class T, class T2, class... ArgsT>
     Error process(T& first, T2& second, ArgsT&... args) {
-        std::string text;
-        *in >> text;
-        std::string::iterator it = text.begin();
-        std::string::iterator end = text.end();
-        if (typeid(first) == typeid(uint64_t&)) {
-            uint64_t tmp = 0;
-            if (it == end) {
-                return Error::CorruptedArchive;
-            }
-            if (!isdigit(*it)) {
-                return Error::CorruptedArchive;
-            }
-            while (it != end && isdigit(*it)) {
-                tmp *= 10;
-                tmp += *it - '0';
-                it++;
-            }
-            if (it != end) {
-                return Error::CorruptedArchive;
-            }
-            first = tmp;
-        } else if (typeid(first) == typeid(bool&)) {
-            if (it == end) {
-                return Error::CorruptedArchive;
-            }
-            if (*it == 't') {
-                it++;
-                if (*it != 'r') return Error::CorruptedArchive;
-                it++;
-                if (*it != 'u') return Error::CorruptedArchive;
-                it++;
-                if (*it != 'e') return Error::CorruptedArchive;
-                first = true;
-            } else if (*it == 'f') {
-                it++;
-                if (*it != 'a') return Error::CorruptedArchive;
-                it++;
-                if (*it != 'l') return Error::CorruptedArchive;
-                it++;
-                if (*it != 's') return Error::CorruptedArchive;
-                it++;
-                if (*it != 'e') return Error::CorruptedArchive;
-                first = false;
-            } else {
-                return Error::CorruptedArchive;
-            }
-        } else {
+        int res = handler(first);
+        if (res) {
             return Error::CorruptedArchive;
         }
         if (sizeof...(args) == 0) {
@@ -131,55 +82,37 @@ private:
 
     template <class Last>
     Error process(Last& last) {
-        std::string text;
-        *in >> text;
-        std::string::iterator it = text.begin();
-        std::string::iterator end = text.end();
-        if (typeid(last) == typeid(uint64_t&)) {
-            uint64_t tmp = 0;
-            if (it == end) {
-                return Error::CorruptedArchive;
-            }
-            if (!isdigit(*it)) {
-                return Error::CorruptedArchive;
-            }
-            while (it != end && isdigit(*it)) {
-                tmp *= 10;
-                tmp += *it - '0';
-                it++;
-            }
-            if (it != end) {
-                return Error::CorruptedArchive;
-            }
-            last = tmp;
-        } else if (typeid(last) == typeid(bool&)) {
-            if (it == end) {
-                return Error::CorruptedArchive;
-            }
-            if (*it == 't') {
-                it++;
-                if (*it != 'r') return Error::CorruptedArchive;
-                it++;
-                if (*it != 'u') return Error::CorruptedArchive;
-                it++;
-                if (*it != 'e') return Error::CorruptedArchive;
-                last = true;
-            } else if (*it == 'f') {
-                it++;
-                if (*it != 'a') return Error::CorruptedArchive;
-                it++;
-                if (*it != 'l') return Error::CorruptedArchive;
-                it++;
-                if (*it != 's') return Error::CorruptedArchive;
-                it++;
-                if (*it != 'e') return Error::CorruptedArchive;
-                last = false;
-            } else {
-                return Error::CorruptedArchive;
-            }
-        } else {
+        int res = handler(last);
+        if (res) {
             return Error::CorruptedArchive;
         }
         return Error::NoError;
+    }
+
+    int handler(bool& a) {
+        std::string text;
+        *in >> text;
+        if (text == "true") {
+            a = true;
+        } else if (text == "false") {
+            a = false;
+        } else {
+            return 1;
+        }
+        return 0;
+    }
+
+    int handler(uint64_t& a) {
+        std::string text;
+        *in >> text;
+        try {
+            if (!isdigit(text[0])) {
+                return 1;
+            }
+            a = std::stoull(text);
+            return 0;
+        } catch (...) {
+            return 1;
+        }
     }
 };
