@@ -6,14 +6,11 @@ all: my_prog
 test: my_prog
 	./my_prog
 
-my_prog: main.o Serializer.o
+my_prog: main.o
 	$(CC) -o my_prog $^
 
-main.o: main.cpp Serializer.o
+main.o: main.cpp
 	$(CC) main.cpp $(OPTS)
-
-Serializer.o: Serializer.cpp
-	$(CC) Serializer.cpp $(OPTS)
 
 clean:
 	rm -rf *.o *.dSYM my_prog
