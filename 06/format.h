@@ -1,48 +1,33 @@
 #pragma once
+
 #include <cctype>
 #include <string>
 #include <vector>
 #include <stdexcept>
 
-using namespace std;
-
-template <class T>
-string process(string& text, vector<string>& v, T&& arg) {
-    stringstream s;
-    s << arg;
-    v.push_back(s.str());
-    stringstream new_text;
-    for (int i = 0; i < text.size(); i++) {
+std::string process(const char *text, std::vector <std::string> &v) {
+    std::stringstream new_text;
+    auto len = strlen(text);
+    for (int i = 0; i < len; i++) {
         if (text[i] == '{') {
-            if (text[i + 1] == '}') {
-                throw runtime_error("expected value");
+            if (text[++i] == '}') {
+                throw std::runtime_error("expected value");
             }
-            size_t pos = i + 1;
-            size_t substr_size = 1;
-            while (text[i + substr_size] != '}') {
-                if (i + substr_size == text.size() or text[i + substr_size] == '{' or !isdigit(text[i + substr_size])) {
-                    throw runtime_error("expected closing scope");
+            size_t num = 0;
+            while (text[i] != '}') {
+                if (!isdigit(text[i])) {
+                    throw std::runtime_error("expected closing scope");
                 }
-                substr_size++;
+                num *= 10;
+                num += text[i] - '0';
+                i++;
             }
-           substr_size--;
-            try {
-                auto l = text.substr(pos, substr_size);
-                auto num = stoull(l);
-                if (num >= v.size()) {
-                    throw runtime_error("out of range");
-                }
-                new_text << v[num];
-                i = pos + substr_size;
+            if (num >= v.size()) {
+                throw std::runtime_error("out of range");
             }
-            catch (out_of_range& e) {
-                throw runtime_error("out of range");
-            }
-            catch (invalid_argument& e) {
-                throw runtime_error("invalid_argument");
-            }
+            new_text << v[num];
         } else if (text[i] == '}') {
-            throw runtime_error("expected opening scope before closing");
+            throw std::runtime_error("expected opening scope before closing");
         } else {
             new_text << text[i];
         }
@@ -50,24 +35,26 @@ string process(string& text, vector<string>& v, T&& arg) {
     return new_text.str();
 }
 
-template <class T, class... Args>
-string process(string& text, vector<string>& v, T&& arg, Args&&... args) {
-    stringstream s;
+template<class T>
+std::string process(const char *text, std::vector <std::string> &v, T &&arg) {
+    std::stringstream s;
     s << arg;
     v.push_back(s.str());
-    return process(text, v, forward<Args>(args)...);
+    return process(text, v);
 }
 
-string process(string& text, vector<string>& v) {
-    return text;
+template<class T, class... Args>
+std::string process(const char *text, std::vector <std::string> &v, T &&arg, Args &&... args) {
+    std::stringstream s;
+    s << arg;
+    v.push_back(s.str());
+    return process(text, v, std::forward<Args>(args)...);
 }
 
-
-template <class... Args>
-string format(const char *text, Args&&... args) {
-    auto new_text = string(text);
-    vector<string> v;
-    return process(new_text, v, forward<Args>(args)...);
+template<class... Args>
+std::string format(const char *text, Args &&... args) {
+    std::vector <std::string> v;
+    return process(text, v, std::forward<Args>(args)...);
 }
 
 
