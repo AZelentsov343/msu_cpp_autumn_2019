@@ -20,10 +20,10 @@ string process(string& text, vector<string>& v, T&& arg) {
             size_t pos = i + 1;
             size_t substr_size = 1;
             while (text[i + substr_size] != '}') {
-                substr_size++;
-                if (i + substr_size - 1 == text.size() or text[i + substr_size - 1] == '{' or !isdigit(text[i + substr_size - 1])) {
+                if (i + substr_size == text.size() or text[i + substr_size] == '{' or !isdigit(text[i + substr_size])) {
                     throw runtime_error("expected closing scope");
                 }
+                substr_size++;
             }
            substr_size--;
             try {
