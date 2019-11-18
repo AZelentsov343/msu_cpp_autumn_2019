@@ -7,8 +7,7 @@
 
 std::string process(const char *text, std::vector <std::string> &v) {
     std::stringstream new_text;
-    auto len = strlen(text);
-    for (int i = 0; i < len; i++) {
+    for (int i = 0; text[i] != '\0'; i++) {
         if (text[i] == '{') {
             if (text[++i] == '}') {
                 throw std::runtime_error("expected value");
