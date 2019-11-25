@@ -214,36 +214,6 @@ int main()
         v.resize(100);
 
         checkEqual(Counter, 100);
-
-        for (int i = 0; i < 100; ++i)
-        {
-            v.push_back(Counterable());
-        }
-
-        checkEqual(Counter, 200);
-
-        v.resize(150);
-
-        checkEqual(Counter, 150);
-
-        for (int i = 0; i < 100; ++i)
-        {
-            v.pop_back();
-        }
-
-        checkEqual(Counter, 50);
-
-        v.resize(25);
-
-        checkEqual(Counter, 25);
-
-        v.clear();
-
-        checkEqual(Counter, 0);
-
-        v.resize(25);
-
-        checkEqual(Counter, 25);
     }
 
     checkEqual(Counter, 0);
