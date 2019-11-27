@@ -48,8 +48,8 @@ public:
 
 template <class T>
 class Iterator {
-    T* ptr_;
-    bool reverse;
+    using size_type = std::size_t;
+    using reference = T&;
 public:
     explicit Iterator(T* ptr, bool reverse) : ptr_(ptr), reverse(reverse) {}
 
@@ -61,7 +61,7 @@ public:
         return !(*this == other);
     }
 
-    T& operator*() const {
+    reference operator*() const {
         return *ptr_;
     }
 
@@ -74,7 +74,7 @@ public:
         return *this;
     }
 
-    Iterator& operator+(size_t n) {
+    Iterator& operator+(size_type n) {
         if (reverse) {
             ptr_ -= n;
         } else {
@@ -83,7 +83,7 @@ public:
         return *this;
     }
 
-    Iterator& operator-(size_t n) {
+    Iterator& operator-(size_type n) {
         if (reverse) {
             ptr_ += n;
         } else {
@@ -121,6 +121,9 @@ public:
         return it;
     }
 
+private:
+    T* ptr_;
+    bool reverse;
 };
 
 template <class T, class Alloc = Allocator<T>>
@@ -260,7 +263,7 @@ public:
         }
     }
 
-    void resize(size_t newSize, const_reference defaultValue) {
+    void resize(size_type newSize, const_reference defaultValue) {
         if (newSize < size_) {
             alloc_.destroy(data_ + newSize, size_ - newSize);
             size_ = newSize;
@@ -287,11 +290,11 @@ public:
         size_ = 0;
     }
 
-    size_t size() {
+    size_type size() {
         return size_;
     }
 
-    size_t capacity() {
+    size_type capacity() {
         return capacity_;
     }
 
