@@ -7,19 +7,42 @@
 
 template <class T>
 class Allocator {
+    using value_type = T;
+    using pointer = T*;
+    using reference = T&;
+    using const_reference = const T&;
+    using size_type = std::size_t;
+
 public:
-    std::unique_ptr<T[]> allocate(size_t count) {
-        return std::make_unique<T[]>(count);
+    pointer allocate(size_type count) {
+        pointer p = (T *)malloc(count * sizeof(value_type));
+        return p;
     }
 
-    void deallocate(std::unique_ptr<T[]> ptr, size_t count) {
-        for (int i = 0; i < count; i++) {
-            ptr[i].~T();
-        }
+    void deallocate(pointer p, size_type count) {
+        free(p);
     }
 
     size_t max_size() const noexcept {
-        return std::numeric_limits<size_t>::max();
+        return std::numeric_limits<size_t>::max() / sizeof(value_type);
+    }
+
+    void construct(pointer p, const_reference val, size_type n) {
+        for (size_type i = 0; i < n; i++) {
+            new ((void *)(p + i)) T(val);
+        }
+    }
+
+    void construct(pointer p, size_type n) {
+        for (size_type i = 0; i < n; i++) {
+            new ((void *)(p + i)) T();
+        }
+    }
+
+    void destroy(pointer p, size_type n) {
+        for (size_type i = 0; i < n; i++) {
+            (p[i]).~T();
+        }
     }
 };
 
@@ -105,127 +128,152 @@ class Vector {
 public:
     using iterator = Iterator<T>;
     using value_type = T;
+    using size_type = std::size_t;
     using const_reference = const T&;
+    using pointer = T *;
+    using reference = T&;
 
     explicit Vector() {
         alloc_ = Alloc();
-        data_ = alloc_.allocate(2);
+        data_ = nullptr;
         size_ = 0;
-        capacity_ = 2;
+        capacity_ = 0;
     }
 
-    explicit Vector(size_t count) {
+    explicit Vector(size_type count) {
         alloc_ = Alloc();
         data_ = alloc_.allocate(count);
-        size_ = 0;
-        capacity_ = count;
-    }
-
-    Vector(size_t count, const T& defaultValue) {
-        alloc_ = Alloc();
-        data_ = alloc_.allocate(count);
+        alloc_.construct(data_, count);
         size_ = count;
         capacity_ = count;
-        for (int i = 0; i < count; i++) {
-            data_[i] = defaultValue;
-        }
+    }
+
+    Vector(size_type count, const_reference defaultValue) {
+        alloc_ = Alloc();
+        data_ = alloc_.allocate(count);
+        alloc_.construct(data_, defaultValue, count);
+        size_ = count;
+        capacity_ = count;
+    }
+
+    ~Vector() {
+        alloc_.destroy(data_, size_);
+        alloc_.deallocate(data_, size_);
     }
 
     iterator begin() noexcept {
-        return iterator(data_.get(), false);
+        return iterator(data_, false);
     }
     iterator rbegin() noexcept {
-        return iterator(data_.get() + size_ - 1, true);
+        return iterator(data_ + size_ - 1, true);
     }
 
     iterator end() noexcept {
-        return iterator(data_.get() + size_, false);
+        return iterator(data_ + size_, false);
     }
     iterator rend() noexcept {
-        return iterator(data_.get() - 1, true);
+        return iterator(data_- 1, true);
     }
 
-    T operator[](size_t ind) {
-        if ((ind >= size_) || (ind < 0)) {
-            throw std::out_of_range("");
-        }
+    reference operator[](size_type ind) {
+        return data_[ind];
+    }
+
+    const_reference operator[](size_type ind) const {
         return data_[ind];
     }
 
     void push_back(value_type&& value) {
-        if (size_ == capacity_) {
-            auto new_data = alloc_.allocate(capacity_ * 2);
-            std::copy(data_.get(), data_.get() + size_, new_data.get());
-            data_.swap(new_data);
-            data_[size_++] = value;
+        if (capacity_ == 0) {
+            data_ = alloc_.allocate(1);
+            new((void *) data_) T(value);
+            size_ = 1;
+            capacity_++;
+        } else if (size_ == capacity_) {
+            pointer new_data = alloc_.allocate(capacity_ * 2);
+            std::copy(data_, data_ + size_, new_data);
+            alloc_.destroy(data_, size_);
+            alloc_.deallocate(data_, size_);
+            data_ = new_data;
+            data_[size_++] = std::move(value);
             capacity_ *= 2;
         } else if (size_ < capacity_) {
-            data_[size_++] = value;
-        } else {
-            throw std::runtime_error("MY ERROR");
+            data_[size_++] = std::move(value);
         }
     }
 
-    void push_back(const value_type& value) {
-        if (size_ == capacity_) {
-            auto new_data = alloc_.allocate(capacity_ * 2);
-            std::copy(data_.get(), data_.get() + size_, new_data.get());
-            data_.swap(new_data);
-            data_[size_++] = value;
+    void push_back(const_reference value) {
+        if (capacity_ == 0) {
+            data_ = alloc_.allocate(1);
+            new ((void *)data_) T(value);
+            size_ = 1;
+            capacity_++;
+        } else if (size_ == capacity_) {
+            pointer new_data = alloc_.allocate(capacity_ * 2);
+            std::copy(data_, data_ + size_, new_data);
+            alloc_.destroy(data_, size_);
+            alloc_.deallocate(data_, size_);
+            data_ = new_data;
+            new ((void *)(data_ + size_)) T(value);
+            size_++;
             capacity_ *= 2;
         } else if (size_ < capacity_) {
-            data_[size_++] = value;
+            new ((void *)(data_ + size_)) T(value);
+            size_++;
         }
     }
 
-    T pop_back() {
-        if (size_ == 0) {
-            throw std::runtime_error("nothing to pop");
-        } else {
-            return data_[--size_];
-        }
+    void pop_back() {
+        alloc_.destroy(data_ + size_ - 1, 1);
+        size_--;
     }
 
-    void reserve(size_t count) {
+    void reserve(size_type count) {
+        if (count > alloc_.max_size()) {
+            throw std::length_error("an attempt to reserve too much for vector");
+        }
         if (count > capacity_) {
-            auto new_data = alloc_.allocate(count);
-            std::copy(data_.get(), data_.get() + size_, new_data.get());
-            data_.swap(new_data);
+            pointer new_data = alloc_.allocate(count);
+            std::copy(data_, data_ + size_, new_data);
+            alloc_.destroy(data_, size_);
+            alloc_.deallocate(data_, size_);
+            data_ = new_data;
             capacity_ = count;
         }
     }
 
-    void resize(size_t newSize) {
-        if (newSize > capacity_) {
-            auto new_data = alloc_.allocate(newSize);
-            std::copy(data_.get(), data_.get() + size_, new_data.get());
-            data_.swap(new_data);
-            capacity_ = newSize;
+    void resize(size_type newSize) {
+        if (newSize < size_) {
+            alloc_.destroy(data_ + newSize, size_ - newSize);
             size_ = newSize;
         } else if (newSize > size_) {
-            size_ = newSize;
-        } else {
-            for (int i = newSize; i < size_; i++) {
-                data_[i] = T();
+            if (newSize > capacity_) {
+                pointer new_data = alloc_.allocate(newSize);
+                std::copy(data_, data_ + size_, new_data);
+                alloc_.destroy(data_, size_);
+                alloc_.deallocate(data_, size_);
+                data_ = new_data;
+                capacity_ = newSize;
             }
+            alloc_.construct(data_ + size_, newSize - size_);
             size_ = newSize;
         }
     }
 
-    void resize(size_t newSize, const value_type& defaultValue) {
-        if (newSize > capacity_) {
-            auto new_data = alloc_.allocate(newSize);
-            std::copy(data_.get(), data_.get() + size_, new_data.get());
-            data_.swap(new_data);
-            capacity_ = newSize;
-            for (int i = size_; i < newSize; i++) {
-                data_[i] = defaultValue;
-            }
+    void resize(size_t newSize, const_reference defaultValue) {
+        if (newSize < size_) {
+            alloc_.destroy(data_ + newSize, size_ - newSize);
             size_ = newSize;
-        } else {
-            for (int i = size_; i < newSize; i++) {
-                data_[i] = defaultValue;
+        } else if (newSize > size_) {
+            if (newSize > capacity_) {
+                pointer new_data = alloc_.allocate(newSize);
+                std::copy(data_, data_ + size_, new_data);
+                alloc_.destroy(data_, size_);
+                alloc_.deallocate(data_, size_);
+                data_ = new_data;
+                capacity_ = newSize;
             }
+            alloc_.construct(data_ + size_, defaultValue, newSize - size_);
             size_ = newSize;
         }
     }
@@ -235,9 +283,8 @@ public:
     }
 
     void clear() noexcept {
-        data_ = alloc_.allocate(2);
+        alloc_.destroy(data_, size_);
         size_ = 0;
-        capacity_ = 2;
     }
 
     size_t size() {
@@ -250,9 +297,9 @@ public:
 
 private:
     Alloc alloc_;
-    size_t size_;
-    size_t capacity_;
-    std::unique_ptr<T[]> data_;
+    size_type size_;
+    size_type capacity_;
+    pointer data_;
 };
 
 #endif //INC_07_VECTOR_H

@@ -9,8 +9,6 @@
 #include "Vector.h"
 
 //Copied from https://github.com/mtrempoltsev/msu_cpp_lectures/blob/master/homework/07/test.cpp
-using namespace std;
-
 template <class T>
 int benchmark(T& c)
 {
@@ -167,7 +165,6 @@ int main()
         ++r;
         checkTrue(r == v.rend());
 
-
         auto f = v.begin();
         checkTrue(f != v.end());
         checkEqual(*f, 3);
@@ -214,9 +211,40 @@ int main()
         v.resize(100);
 
         checkEqual(Counter, 100);
+
+        for (int i = 0; i < 100; ++i)
+        {
+            v.push_back(Counterable());
+        }
+
+        checkEqual(Counter, 200);
+
+        v.resize(150);
+
+        checkEqual(Counter, 150);
+
+        for (int i = 0; i < 100; ++i)
+        {
+            v.pop_back();
+        }
+
+        checkEqual(Counter, 50);
+
+        v.resize(25);
+
+        checkEqual(Counter, 25);
+
+        v.clear();
+
+        checkEqual(Counter, 0);
+
+        v.resize(25);
+
+        checkEqual(Counter, 25);
     }
 
     checkEqual(Counter, 0);
+
 
     int res = 0;
 
@@ -255,4 +283,3 @@ int main()
 
     return 0;
 }
-
