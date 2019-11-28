@@ -15,12 +15,15 @@ class Allocator {
 
 public:
     pointer allocate(size_type count) {
-        pointer p = (T *)malloc(count * sizeof(value_type));
+        pointer p = static_cast<T*> (::operator new(sizeof(value_type) * count));
+        if (p == nullptr) {
+            throw std::bad_alloc();
+        }
         return p;
     }
 
     void deallocate(pointer p, size_type count) {
-        free(p);
+        ::operator delete(p);
     }
 
     size_t max_size() const noexcept {
@@ -29,13 +32,13 @@ public:
 
     void construct(pointer p, const_reference val, size_type n) {
         for (size_type i = 0; i < n; i++) {
-            new ((void *)(p + i)) T(val);
+            new (p + i) T(val);
         }
     }
 
     void construct(pointer p, size_type n) {
         for (size_type i = 0; i < n; i++) {
-            new ((void *)(p + i)) T();
+            new (p + i) T();
         }
     }
 
@@ -189,7 +192,7 @@ public:
     void push_back(value_type&& value) {
         if (capacity_ == 0) {
             data_ = alloc_.allocate(1);
-            new((void *) data_) T(value);
+            new (data_) T(value);
             size_ = 1;
             capacity_++;
         } else if (size_ == capacity_) {
@@ -208,7 +211,7 @@ public:
     void push_back(const_reference value) {
         if (capacity_ == 0) {
             data_ = alloc_.allocate(1);
-            new ((void *)data_) T(value);
+            new (data_) T(value);
             size_ = 1;
             capacity_++;
         } else if (size_ == capacity_) {
@@ -217,11 +220,11 @@ public:
             alloc_.destroy(data_, size_);
             alloc_.deallocate(data_, size_);
             data_ = new_data;
-            new ((void *)(data_ + size_)) T(value);
+            new (data_ + size_) T(value);
             size_++;
             capacity_ *= 2;
         } else if (size_ < capacity_) {
-            new ((void *)(data_ + size_)) T(value);
+            new (data_ + size_) T(value);
             size_++;
         }
     }
