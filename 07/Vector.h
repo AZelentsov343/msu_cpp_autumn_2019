@@ -164,7 +164,7 @@ public:
 
     ~Vector() {
         alloc_.destroy(data_, size_);
-        alloc_.deallocate(data_, size_);
+        alloc_.deallocate(data_, capacity_);
     }
 
     iterator begin() noexcept {
@@ -199,7 +199,7 @@ public:
             pointer new_data = alloc_.allocate(capacity_ * 2);
             std::copy(data_, data_ + size_, new_data);
             alloc_.destroy(data_, size_);
-            alloc_.deallocate(data_, size_);
+            alloc_.deallocate(data_, capacity_);
             data_ = new_data;
             data_[size_++] = std::move(value);
             capacity_ *= 2;
@@ -218,7 +218,7 @@ public:
             pointer new_data = alloc_.allocate(capacity_ * 2);
             std::copy(data_, data_ + size_, new_data);
             alloc_.destroy(data_, size_);
-            alloc_.deallocate(data_, size_);
+            alloc_.deallocate(data_, capacity_);
             data_ = new_data;
             new (data_ + size_) T(value);
             size_++;
@@ -242,7 +242,7 @@ public:
             pointer new_data = alloc_.allocate(count);
             std::copy(data_, data_ + size_, new_data);
             alloc_.destroy(data_, size_);
-            alloc_.deallocate(data_, size_);
+            alloc_.deallocate(data_, capacity_);
             data_ = new_data;
             capacity_ = count;
         }
@@ -257,7 +257,7 @@ public:
                 pointer new_data = alloc_.allocate(newSize);
                 std::copy(data_, data_ + size_, new_data);
                 alloc_.destroy(data_, size_);
-                alloc_.deallocate(data_, size_);
+                alloc_.deallocate(data_, capacity_);
                 data_ = new_data;
                 capacity_ = newSize;
             }
@@ -275,7 +275,7 @@ public:
                 pointer new_data = alloc_.allocate(newSize);
                 std::copy(data_, data_ + size_, new_data);
                 alloc_.destroy(data_, size_);
-                alloc_.deallocate(data_, size_);
+                alloc_.deallocate(data_, capacity_);
                 data_ = new_data;
                 capacity_ = newSize;
             }
