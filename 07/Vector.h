@@ -15,7 +15,7 @@ class Allocator {
 
 public:
     pointer allocate(size_type count) {
-        pointer p = static_cast<T*> (::operator new(sizeof(value_type) * count));
+        pointer p = (pointer)calloc(count, sizeof(value_type));
         if (p == nullptr) {
             throw std::bad_alloc();
         }
@@ -23,7 +23,7 @@ public:
     }
 
     void deallocate(pointer p, size_type count) {
-        ::operator delete(p);
+        free(p);
     }
 
     size_t max_size() const noexcept {
