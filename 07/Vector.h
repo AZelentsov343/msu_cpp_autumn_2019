@@ -197,6 +197,7 @@ public:
             capacity_++;
         } else if (size_ == capacity_) {
             pointer new_data = alloc_.allocate(capacity_ * 2);
+            alloc_.construct(new_data, capacity_ * 2);
             std::copy(data_, data_ + size_, new_data);
             alloc_.destroy(data_, size_);
             alloc_.deallocate(data_, capacity_);
@@ -216,6 +217,7 @@ public:
             capacity_++;
         } else if (size_ == capacity_) {
             pointer new_data = alloc_.allocate(capacity_ * 2);
+            alloc_.construct(new_data, capacity_ * 2);
             std::copy(data_, data_ + size_, new_data);
             alloc_.destroy(data_, size_);
             alloc_.deallocate(data_, capacity_);
@@ -240,6 +242,7 @@ public:
         }
         if (count > capacity_) {
             pointer new_data = alloc_.allocate(count);
+            alloc_.construct(new_data, count);
             std::copy(data_, data_ + size_, new_data);
             alloc_.destroy(data_, size_);
             alloc_.deallocate(data_, capacity_);
@@ -255,6 +258,7 @@ public:
         } else if (newSize > size_) {
             if (newSize > capacity_) {
                 pointer new_data = alloc_.allocate(newSize);
+                alloc_.construct(new_data, newSize);
                 std::copy(data_, data_ + size_, new_data);
                 alloc_.destroy(data_, size_);
                 alloc_.deallocate(data_, capacity_);
@@ -273,6 +277,7 @@ public:
         } else if (newSize > size_) {
             if (newSize > capacity_) {
                 pointer new_data = alloc_.allocate(newSize);
+                alloc_.construct(new_data, newSize);
                 std::copy(data_, data_ + size_, new_data);
                 alloc_.destroy(data_, size_);
                 alloc_.deallocate(data_, capacity_);
