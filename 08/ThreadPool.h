@@ -39,7 +39,7 @@ public:
         if (alive) {
             alive = false;
             newTask.notify_all();
-            for (int i = 0; i < size; i++) {
+            for (size_t i = 0; i < size; i++) {
                 threads[i].join();
             }
         }
@@ -69,11 +69,13 @@ private:
     template <class Promise_ptr, class Func, class... Args>
     void makeTask(Promise_ptr task, Func func, Args... args) {
         task->set_value(func(args...));
+        delete task;
     }
 
     template <class Func, class... Args>
     void makeTask(std::promise<void> *task, Func func, Args... args) {
         task->set_value();
+        delete task;
         func(args...);
     }
 
