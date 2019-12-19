@@ -24,40 +24,74 @@ size_t get_file_size(std::string filename) {
     return size;
 }
 
-void sort_one_file(ifstream &file, mutex &m) {
+/*void sort_one_file(ifstream &file, mutex &m) {
     vector<uint64_t> nums;
     nums.reserve(MAX);
+    size_t cur = 0;
     while (1) {
         nums.clear();
         for (int i = 0; i < MAX; i++) {
-            uint64_t num;
             unique_lock<mutex> u(m);
-            if (not file.read((char *)&num, sizeof(uint64_t))) {
+            uint64_t num;
+            if (!file.read((char *)&num, sizeof(uint64_t))) {
                 break;
-            } else {
-                u.unlock();
-                nums.push_back(num);
             }
+            u.unlock();
+            nums.push_back(num);
             if (nums.empty()) {
                 return;
             } else {
                 mutex_count.lock();
+                cur = count_files;
                 count_files++;
                 mutex_count.unlock();
             }
         }
         sort(nums.begin(), nums.end());
         stringstream a;
-        mutex_count.lock();
-        a << "file" << count_files << ".bin";
-        mutex_count.unlock();
+        a << "file" << cur << ".bin";
         ofstream file_count(a.str(), ios::binary | ios::out);
         for (auto num : nums) {
             file_count.write((char*)&num, sizeof(num));
         }
     }
 
+}*/
+void sort_one_file(ifstream &fin, mutex &m) {
+    auto *nums = new uint64_t[MAX]();
+    size_t size = 0;
+    size_t cur = 0;
+    while (true) {
+        size = 0;
+        for (size_t i = 0; i < MAX; i++) {
+            unique_lock <mutex> u(m);
+            uint64_t num;
+            if (!fin.read((char *) &num, sizeof(num))) {
+                break;
+            }
+            u.unlock();
+            nums[size++] = num;
+        }
+        if (size == 0) {
+            delete[] nums;
+            return;
+        } else {
+            std::lock_guard <std::mutex> guard(mutex_count);
+            cur = count_files;
+            count_files++;
+        }
+        sort(nums, nums + size);
+        stringstream my_out;
+        my_out << "file" << cur << ".bin";
+        ofstream fout(my_out.str(), std::ios::binary | std::ios::out);
+        for (size_t i = 0; i < size; i++) {
+            fout.write((char *) &nums[i], sizeof(nums[i]));
+        }
+    }
 }
+
+
+
 
 void merge(ifstream& first, off_t size1, ifstream& second, off_t size2, ofstream& result) {
     result.seekp(0);
@@ -82,6 +116,7 @@ void merge(ifstream& first, off_t size1, ifstream& second, off_t size2, ofstream
         }
     }
 
+
     while (i < size1) {
         result.write((char *) (arr1 + i), sizeof(uint64_t));
         i++;
@@ -91,6 +126,7 @@ void merge(ifstream& first, off_t size1, ifstream& second, off_t size2, ofstream
         result.write((char *) (arr2 + j), sizeof(uint64_t));
         j++;
     }
+
     delete[] arr1;
     delete[] arr2;
 }
@@ -109,15 +145,16 @@ void my_sort(const string& file_in, const string& file_out) {
     t2.join();
     fin.close();
 
-    printf("here\n");
-    fflush(stdout);
     for (int i = 0; i < count_files; i++) {
         stringstream sout;
         sout << "file" << i << ".bin";
         v.push_back(sout.str());
     }
 
+
     while (v.size() != 1) {
+        printf("here\n");
+        fflush(stdout);
         auto f1 = v.back();
         v.pop_back();
         auto f2 = v.back();
@@ -130,9 +167,12 @@ void my_sort(const string& file_in, const string& file_out) {
         stringstream sout;
         sout << "file" << count_files << ".bin";
         v.push_back(sout.str());
-        ofstream fout(sout.str(), ios::binary | ios::in);
+        ofstream fout(sout.str(), ios::binary | ios::out);
         merge(fin1, size1, fin2, size2, fout);
+        remove(f1.c_str());
+        remove(f2.c_str());
     }
+
 
     auto size = get_file_size(v[0]);
     ifstream fin2(v[0], ios::binary | ios::in);
