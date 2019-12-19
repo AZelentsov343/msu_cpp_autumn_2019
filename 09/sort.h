@@ -153,8 +153,6 @@ void my_sort(const string& file_in, const string& file_out) {
 
 
     while (v.size() != 1) {
-        printf("here\n");
-        fflush(stdout);
         auto f1 = v.back();
         v.pop_back();
         auto f2 = v.back();
