@@ -9,55 +9,16 @@
 #include <fstream>
 #include <sstream>
 #include <thread>
-#define MAX 1024 * 128
+#include <queue>
+
 using namespace std;
 
-mutex mutex_count;
-size_t count_files = 0;
+enum {
+    MAX = 1024 * 128
+};
 
-size_t get_file_size(std::string filename) {
-    FILE *p_file = NULL;
-    p_file = fopen(filename.c_str(),"rb");
-    fseek(p_file, 0, SEEK_END);
-    size_t size = ftell(p_file) / sizeof(uint64_t);
-    fclose(p_file);
-    return size;
-}
 
-/*void sort_one_file(ifstream &file, mutex &m) {
-    vector<uint64_t> nums;
-    nums.reserve(MAX);
-    size_t cur = 0;
-    while (1) {
-        nums.clear();
-        for (int i = 0; i < MAX; i++) {
-            unique_lock<mutex> u(m);
-            uint64_t num;
-            if (!file.read((char *)&num, sizeof(uint64_t))) {
-                break;
-            }
-            u.unlock();
-            nums.push_back(num);
-            if (nums.empty()) {
-                return;
-            } else {
-                mutex_count.lock();
-                cur = count_files;
-                count_files++;
-                mutex_count.unlock();
-            }
-        }
-        sort(nums.begin(), nums.end());
-        stringstream a;
-        a << "file" << cur << ".bin";
-        ofstream file_count(a.str(), ios::binary | ios::out);
-        for (auto num : nums) {
-            file_count.write((char*)&num, sizeof(num));
-        }
-    }
-
-}*/
-void sort_one_file(ifstream &fin, mutex &m) {
+void sort_one_file(ifstream &fin, mutex &m, size_t &count_files, std::mutex &mutex_count) {
     auto *nums = new uint64_t[MAX]();
     size_t size = 0;
     size_t cur = 0;
@@ -91,94 +52,62 @@ void sort_one_file(ifstream &fin, mutex &m) {
 }
 
 
+void my_sort(const string &name_in, const string &name_out) {
+    mutex m1, m2;
+    ifstream file_in(name_in, ios::binary | ios::in);
+    size_t parts = 0;
 
+    std::thread t1(sort_one_file, ref(file_in), ref(m1), std::ref(parts), ref(m2));
+    std::thread t2(sort_one_file, ref(file_in), ref(m1), std::ref(parts), ref(m2));
+    t1.join();
+    t2.join();
+    file_in.close();
 
-void merge(ifstream& first, off_t size1, ifstream& second, off_t size2, ofstream& result) {
-    result.seekp(0);
-    uint64_t* arr1 = new uint64_t[size1];
-    uint64_t* arr2 = new uint64_t[size2];
+    vector <string> files;
+    for (size_t i = 0; i < parts; ++i) {
+        stringstream sout;
+        sout << "file" << i << ".bin";
+        files.push_back(sout.str());
+    }
 
-    first.seekg(0);
-    first.read((char*)arr1, sizeof(uint64_t) * size1);
+    ofstream file_out(name_out, ios::binary | ios::out);
 
-    second.seekg(0);
-    second.read((char*)arr2, sizeof(uint64_t) * size2);
+    auto from = files.cbegin();
+    auto till = files.cend();
 
-    off_t i = 0, j = 0;
+    priority_queue < pair < uint64_t, size_t >, vector < pair < uint64_t, size_t >>, std::greater < pair < uint64_t,
+            size_t >> > queue;
+    size_t size = till - from;
+    vector <ifstream> f_vect;
 
-    while (i < size1 && j < size2) {
-        if (arr1[i] < arr2[j]) {
-            result.write((char *) (arr1 + i), sizeof(uint64_t));
-            i++;
-        } else {
-            result.write((char *) (arr2 + j), sizeof(uint64_t));
-            j++;
+    for (vector<string>::const_iterator i = from; i != till; i++) {
+        f_vect.emplace_back(*i, ios::binary | ios::in);
+    }
+
+    for (size_t i = 0; i < f_vect.size(); i++) {
+        if (f_vect[i].is_open()) {
+            uint64_t num;
+            if (f_vect[i].read((char *) &num, sizeof(num))) {
+                queue.push(make_pair(num, i));
+            }
         }
     }
 
-
-    while (i < size1) {
-        result.write((char *) (arr1 + i), sizeof(uint64_t));
-        i++;
-    }
-
-    while (j < size2) {
-        result.write((char *) (arr2 + j), sizeof(uint64_t));
-        j++;
-    }
-
-    delete[] arr1;
-    delete[] arr2;
-}
-
-
-void my_sort(const string& file_in, const string& file_out) {
-    count_files = 0;
-    vector<string> v;
-
-    ifstream fin(file_in, ios::binary | ios::in);
-    mutex m;
-
-    thread t1(sort_one_file, ref(fin), ref(m));
-    thread t2(sort_one_file, ref(fin), ref(m));
-    t1.join();
-    t2.join();
-    fin.close();
-
-    for (int i = 0; i < count_files; i++) {
-        stringstream sout;
-        sout << "file" << i << ".bin";
-        v.push_back(sout.str());
-    }
-
-
-    while (v.size() != 1) {
-        auto f1 = v.back();
-        v.pop_back();
-        auto f2 = v.back();
-        v.pop_back();
-        ifstream fin1(f1, ios::binary | ios::in);
-        ifstream fin2(f1, ios::binary | ios::in);
-        auto size1 = get_file_size(f1);
-        auto size2 = get_file_size(f2);
-        count_files++;
-        stringstream sout;
-        sout << "file" << count_files << ".bin";
-        v.push_back(sout.str());
-        ofstream fout(sout.str(), ios::binary | ios::out);
-        merge(fin1, size1, fin2, size2, fout);
-        remove(f1.c_str());
-        remove(f2.c_str());
-    }
-
-
-    auto size = get_file_size(v[0]);
-    ifstream fin2(v[0], ios::binary | ios::in);
-    ofstream fout(file_out, ios::binary | ios::in);
-    for (int i = 0; i < size; i++) {
+    while (!queue.empty()) {
         uint64_t tmp;
-        fin2.read((char *)&tmp, sizeof(uint64_t));
-        fout.write((char *)&tmp, sizeof(uint64_t));
+        size_t size;
+        tie(tmp, size) = queue.top();
+        queue.pop();
+        file_out.write((char *) &tmp, sizeof(tmp));
+        if (f_vect[size].read((char *) &tmp, sizeof(tmp))) {
+            queue.push(make_pair(tmp, size));
+        }
+    }
+
+    file_out.close();
+
+    for (const auto &i : files) {
+        remove(i.c_str());
     }
 }
 

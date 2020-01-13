@@ -26,7 +26,7 @@ int main() {
     my_sort("f1.bin", "out.bin");
     ifstream fin("f2.bin", ios::binary | ios::in);
     ifstream fout("out.bin", ios::binary | ios::in);
-    vector<uint64_t> v;
+    vector <uint64_t> v;
     uint64_t tmp;
     while (true) {
         if (not fin.read((char *) &tmp, sizeof(tmp))) {
