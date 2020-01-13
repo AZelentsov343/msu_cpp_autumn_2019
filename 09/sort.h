@@ -55,6 +55,12 @@ void sort_one_file(ifstream &fin, mutex &m, size_t &count_files, std::mutex &mut
 void my_sort(const string &name_in, const string &name_out) {
     mutex m, num_mutex;
     ifstream file_in(name_in, ios::binary | ios::in);
+
+    if (!file_in) {
+        cout << "Can't open file!" << endl;
+        return;
+    }
+
     size_t parts = 0;
 
     thread t1(sort_one_file, ref(file_in), ref(m), std::ref(parts), ref(num_mutex));
