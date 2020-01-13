@@ -53,12 +53,12 @@ void sort_one_file(ifstream &fin, mutex &m, size_t &count_files, std::mutex &mut
 
 
 void my_sort(const string &name_in, const string &name_out) {
-    mutex m1, m2;
+    mutex m, num_mutex;
     ifstream file_in(name_in, ios::binary | ios::in);
     size_t parts = 0;
 
-    std::thread t1(sort_one_file, ref(file_in), ref(m1), std::ref(parts), ref(m2));
-    std::thread t2(sort_one_file, ref(file_in), ref(m1), std::ref(parts), ref(m2));
+    thread t1(sort_one_file, ref(file_in), ref(m), std::ref(parts), ref(num_mutex));
+    thread t2(sort_one_file, ref(file_in), ref(m), std::ref(parts), ref(num_mutex));
     t1.join();
     t2.join();
     file_in.close();
@@ -106,8 +106,8 @@ void my_sort(const string &name_in, const string &name_out) {
 
     file_out.close();
 
-    for (const auto &i : files) {
-        remove(i.c_str());
+    for (auto &file : files) {
+        remove(file.c_str());
     }
 }
 
